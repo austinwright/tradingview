@@ -1,0 +1,77 @@
+// @version=3
+// 
+// @author=chillbroswaggins
+//
+// TD Sequential-Style indicator
+// 
+// S = Sell Signal
+// B = Buy Signal
+// ⚠ = Sell (above bar) or Buy (below bar) Signal that is 'not ideal' - meaning the signal bar's or the previous bar's high or low is not higer or lower than one of the previous 2 bars.
+// - This could indicate that waiting another bar will deliver a 'true' signal. (Useful at the beginning of the trend reversal signal, not so much at the end)
+// 
+// Copyright 2017 - TradingView User: chillbroswaggins
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// Indicator and Rules based on indicator as seen on CoinSheet.org
+// 
+// Also, use this indicator at your own risk. Ditto this: https://www.tradingview.com/risk-warning/
+// - This is just a script which I slammed together (and used to teach myself a bit of Pine Script), NOT a fortune telling device, NOT a timey-wimey machine, NOT a magic, money-making spell, etc.
+
+study(title="Daily Number Indicator", shorttitle="Number Indicator", overlay=true)
+src = close
+// According to coinsheet signal is 9 candles in a row that meet the condition
+candlesUntilSignal = input(9, minval=3)
+// the condition (close is higher or lower than the candle 4 days ago)
+candlesPastToCompare = input(4, minval=1) 
+
+closeIndicator = src[0] - src[candlesPastToCompare] // the default condition is a close higher or lower than the close 4 candles ago
+
+higherCondition = closeIndicator > 0 ? true : false // see these? I don't trust the conditional language/logical operators just yet...
+equalCondition  = closeIndicator == 0 ? true : false
+lowerCondition  = closeIndicator < 0 ? true : false
+
+higherCount = 0
+lowerCount = 0
+sameCount = 0
+
+higherCount := higherCondition ? higherCount[1]+1 : 0
+lowerCount  := lowerCondition ? lowerCount[1]+1 : 0
+sameCount   := equalCondition ? sameCount[1] + 1 : 0
+
+signalSell = higherCount >= candlesUntilSignal ? true : false
+signalBuy  = lowerCount >= candlesUntilSignal ? true : false
+
+// we have a buy signal and the signalling candle (#9)'s low and/or its predecesor (8#)'s low are lower than the previous pair (#6 & #7)'s lows
+signalIdealBuy  = (low < low[2]) and (low < low[3]) and (low[1] < low[2]) and (low[1] < low[3]) ? true : false
+// same as above but with highs
+signalIdealSell = (high > high[2]) and (high > high[3]) and (high[1] > high[2]) and (high[1] > high[3]) ? true : false
+
+indicatorColor  = gray
+indicatorColor := higherCondition ? green : indicatorColor
+indicatorColor := lowerCondition  ? red   : indicatorColor
+indicatorColor := (signalSell and not signalIdealSell) or (signalBuy and not signalIdealBuy) ? orange : indicatorColor
+
+barcolor(open < close ? (signalBuy ? lime : signalSell ? color(#008000,0) : color(#00BF00,0)) : (signalBuy ? color(#FF0000,0) : signalSell ? maroon : color(#BF0000,0) ))
+
+seriesHigher = signalSell ? false : higherCount > 0
+seriesSell = signalSell and not signalIdealSell ? higherCount > 0 : false
+seriesIdealSell = signalSell and signalIdealSell ? higherCount > 0 : false
+
+seriesLower = signalBuy ? false : lowerCount > 0
+seriesBuy = signalBuy and not signalIdealBuy ? lowerCount > 0 : false
+seriesIdealBuy = signalBuy and signalIdealBuy ? lowerCount > 0 : false
+
+plotshape(seriesHigher, style=shape.triangledown, color=indicatorColor, location=location.abovebar)
+plotshape(seriesSell, style=shape.triangledown, color=indicatorColor, location=location.abovebar, text='⚠') // textcolor arg was drawing a blue line on the chart??
+plotshape(seriesIdealSell, style=shape.triangledown, color=indicatorColor, location=location.abovebar, text='S')
+
+plotshape(seriesLower, style=shape.triangleup, color=indicatorColor, location=location.belowbar)
+plotshape(seriesBuy, style=shape.triangleup, color=indicatorColor, location=location.belowbar, text='⚠')
+plotshape(seriesIdealBuy, style=shape.triangleup, color=indicatorColor, location=location.belowbar, text='B')
+
+plotshape(sameCount, style=shape.diamond, color=indicatorColor, location=location.abovebar)
