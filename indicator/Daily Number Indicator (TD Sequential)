@@ -9,7 +9,9 @@
 // ⚠ = Sell (above bar) or Buy (below bar) Signal that is 'not ideal' - meaning the signal bar's or the previous bar's high or low is not higer or lower than one of the previous 2 bars.
 // - This could indicate that waiting another bar will deliver a 'true' signal. (Useful at the beginning of the trend reversal signal, not so much at the end)
 // 
-// Copyright 2017 - TradingView User: chillbroswaggins
+// MIT License
+//
+// Copyright 2017-2020 - TradingView User: chillbroswaggins
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 // 
