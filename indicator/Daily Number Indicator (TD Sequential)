@@ -1,8 +1,9 @@
-// @version=4
+// @version=5
 // 
+//
 // @author=chillbroswaggins
 //
-// TD Sequential-Style indicator
+// Trend-Reversal indicator
 // 
 // S = Sell Signal
 // B = Buy Signal
@@ -11,7 +12,7 @@
 // 
 // MIT License
 //
-// Copyright 2017-2020 - TradingView User: chillbroswaggins
+// Copyright 2017-2023 - TradingView User: chillbroswaggins
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 // 
@@ -21,52 +22,52 @@
 // 
 // Use this indicator at your own risk. See: https://www.tradingview.com/risk-warning/
 
-study(title="Daily Number Indicator (TD Sequential)", shorttitle="Number Indicator", overlay=true)
+indicator(title='Daily Number/Trend Reversal Indicator', shorttitle='Trend Reversal Indicator', overlay=true)
 src = close
 
 // MARK: Indicator Logic
 
 // According to coinsheet signal is 9 candles in a row that meet the condition
-candlesUntilSignal = input(9, minval=3)
+candlesUntilSignal = input.int(9, minval=3)
 // the condition (close is higher or lower than the candle 4 days ago)
-candlesPastToCompare = input(4, minval=1) 
+candlesPastToCompare = input.int(4, minval=1)
 
-closeIndicator = src[0] - src[candlesPastToCompare] // the default condition is a close higher or lower than the close 4 candles ago
+closeIndicator = src[0] - src[candlesPastToCompare]  // the default condition is a close higher or lower than the close 4 candles ago
 
-higherCondition = closeIndicator > 0 ? true : false // see these? I don't trust the conditional language/logical operators just yet...
-equalCondition  = closeIndicator == 0 ? true : false
-lowerCondition  = closeIndicator < 0 ? true : false
+higherCondition = closeIndicator > 0 ? true : false  // see these? I don't trust the conditional language/logical operators just yet...
+equalCondition = closeIndicator == 0 ? true : false
+lowerCondition = closeIndicator < 0 ? true : false
 
 higherCount = 0
 lowerCount = 0
 sameCount = 0
 
 higherCount := higherCondition ? higherCount[1] + 1 : 0
-lowerCount  := lowerCondition ? lowerCount[1] + 1 : 0
-sameCount   := equalCondition ? sameCount[1] + 1 : 0
+lowerCount := lowerCondition ? lowerCount[1] + 1 : 0
+sameCount := equalCondition ? sameCount[1] + 1 : 0
 
 signalSell = higherCount >= candlesUntilSignal ? true : false
-signalBuy  = lowerCount >= candlesUntilSignal ? true : false
+signalBuy = lowerCount >= candlesUntilSignal ? true : false
 
 // we have a buy signal and the signalling candle (#9)'s low and/or its predecesor (8#)'s low are lower than the previous pair (#6 & #7)'s lows
-signalIdealBuy  = (low < low[2]) and (low < low[3]) and (low[1] < low[2]) and (low[1] < low[3]) ? true : false
+signalIdealBuy = low < low[2] and low < low[3] and low[1] < low[2] and low[1] < low[3] ? true : false
 // same as above but with highs
-signalIdealSell = (high > high[2]) and (high > high[3]) and (high[1] > high[2]) and (high[1] > high[3]) ? true : false
+signalIdealSell = high > high[2] and high > high[3] and high[1] > high[2] and high[1] > high[3] ? true : false
 
 // MARK: Colors
 
-lightGreen = color(#33DDCD) // #26 A6 9A * 1.33 = #33 DD CD (defaultGreen * 1.33 = lightGreen)
-defaultGreen = color(#26a69a) // default green bar color as of 3/2020
-darkGreen = color(#196F67) // #26 A6 9A * 0.66 = #19 6F 67 (defaultGreen * 0.66 = darkGreen)
+lightGreen = color(#33DDCD)  // #26 A6 9A * 1.33 = #33 DD CD (defaultGreen * 1.33 = lightGreen)
+defaultGreen = color(#26a69a)  // default green bar color as of 3/2020
+darkGreen = color(#196F67)  // #26 A6 9A * 0.66 = #19 6F 67 (defaultGreen * 0.66 = darkGreen)
 
-lightRed = color(#FF6F6B) // // #EF 53 50 * 1.33 = #FF 6F 6B (defaultRed * 1.33 = lightRed)
-defaultRed = color(#EF5350) // default red bar color as of 3/2020
-darkRed = color(#9F3735) // #EF 53 50 * 0.66 = #9F 37 35 (defaultRed * 0.66 = darkRed)
+lightRed = color(#FF6F6B)  // // #EF 53 50 * 1.33 = #FF 6F 6B (defaultRed * 1.33 = lightRed)
+defaultRed = color(#EF5350)  // default red bar color as of 3/2020
+darkRed = color(#9F3735)  // #EF 53 50 * 0.66 = #9F 37 35 (defaultRed * 0.66 = darkRed)
 
-indicatorColor  = color.gray
+indicatorColor = color.gray
 indicatorColor := higherCondition ? defaultGreen : indicatorColor
-indicatorColor := lowerCondition  ? defaultRed   : indicatorColor
-indicatorColor := (signalSell and not signalIdealSell) or (signalBuy and not signalIdealBuy) ? color.orange : indicatorColor
+indicatorColor := lowerCondition ? defaultRed : indicatorColor
+indicatorColor := signalSell and not signalIdealSell or signalBuy and not signalIdealBuy ? color.orange : indicatorColor
 
 barColor = if open < close
     if signalBuy
@@ -75,7 +76,7 @@ barColor = if open < close
         if signalSell
             darkGreen
         else
-            na // #26A69A - default green barColor
+            na  // #26A69A - default green barColor
 else
     if signalBuy
         lightRed
@@ -83,9 +84,11 @@ else
         if signalSell
             darkRed
         else
-            na // #EF5350 - default red barColor
+            na  // #EF5350 - default red barColor
 
 barcolor(barColor)
+
+// MARK: Plot Indicator Shapes
 
 seriesHigher = signalSell ? false : higherCount > 0
 seriesSell = signalSell and not signalIdealSell ? higherCount > 0 : false
@@ -95,12 +98,13 @@ seriesLower = signalBuy ? false : lowerCount > 0
 seriesBuy = signalBuy and not signalIdealBuy ? lowerCount > 0 : false
 seriesIdealBuy = signalBuy and signalIdealBuy ? lowerCount > 0 : false
 
-plotshape(seriesHigher, style=shape.triangledown, color=indicatorColor, location=location.abovebar, textcolor=indicatorColor)
-plotshape(seriesSell, style=shape.triangledown, color=indicatorColor, location=location.abovebar, text='⚠', textcolor=indicatorColor) // textcolor arg was drawing a blue line on the chart??
-plotshape(seriesIdealSell, style=shape.triangledown, color=indicatorColor, location=location.abovebar, text='S', textcolor=indicatorColor)
+plotshape(seriesHigher, style=shape.triangledown, color=color.new(indicatorColor, 0), location=location.abovebar, textcolor=color.new(indicatorColor, 0))
+plotshape(seriesSell, style=shape.triangledown, color=color.new(indicatorColor, 0), location=location.abovebar, text='⚠', textcolor=color.new(indicatorColor, 0))  // textcolor arg was drawing a blue line on the chart??
+plotshape(seriesIdealSell, style=shape.triangledown, color=color.new(indicatorColor, 0), location=location.abovebar, text='S', textcolor=color.new(indicatorColor, 0))
 
-plotshape(seriesLower, style=shape.triangleup, color=indicatorColor, location=location.belowbar, textcolor=indicatorColor)
-plotshape(seriesBuy, style=shape.triangleup, color=indicatorColor, location=location.belowbar, text='⚠', textcolor=indicatorColor)
-plotshape(seriesIdealBuy, style=shape.triangleup, color=indicatorColor, location=location.belowbar, text='B', textcolor=indicatorColor)
+plotshape(seriesLower, style=shape.triangleup, color=color.new(indicatorColor, 0), location=location.belowbar, textcolor=color.new(indicatorColor, 0))
+plotshape(seriesBuy, style=shape.triangleup, color=color.new(indicatorColor, 0), location=location.belowbar, text='⚠', textcolor=color.new(indicatorColor, 0))
+plotshape(seriesIdealBuy, style=shape.triangleup, color=color.new(indicatorColor, 0), location=location.belowbar, text='B', textcolor=color.new(indicatorColor, 0))
 
-plotshape(sameCount, style=shape.diamond, color=indicatorColor, location=location.abovebar, textcolor=indicatorColor)
+plotshape(sameCount, style=shape.diamond, color=color.new(indicatorColor, 0), location=location.abovebar, textcolor=color.new(indicatorColor, 0))
+
